@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <!-- Login Form (Basic client-side auth) -->
+  <div id="login">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <!-- Upload Section -->
+  <div id="upload" style="display:none;">
+    <input type="file" id="fileInput">
+    <button onclick="uploadToGitHub()">Upload</button>
+    <div id="shareLink"></div>
+  </div>
+
+  <script>
+    // Hardcoded credentials (INSECURE! For demo only)
+    const VALID_USER = "user123";
+    const VALID_PASS = "pass123";
+
+    // GitHub credentials (INSECURE! Token is exposed)
+    const GITHUB_TOKEN = "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";
+    const REPO_OWNER = "ginanjar-janabadra";
+    const REPO_NAME = "cloud_storage_file";
+    const FILE_PATH = "files/";
+
+    function login() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      if (user === VALID_USER && pass === VALID_PASS) {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('upload').style.display = 'block';
+      }
+    }
+
+    async function uploadToGitHub() {
+      const file = document.getElementById('fileInput').files[0];
+      const reader = new FileReader();
+      
+      reader.onload = async () => {
+        const content = btoa(reader.result); // Base64 encode
+        const fileName = FILE_PATH + file.name;
+
+        // Push file to GitHub via API
+        const response = await fetch(
+          `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${fileName}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${GITHUB_TOKEN}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: 'Upload via cloud storage',
+              content: content,
+              branch: 'main'
+            })
+          }
+        );
+
+        const data = await response.json();
+        const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${fileName}`;
+        document.getElementById('shareLink').innerHTML = 
+          `<a href="${rawUrl}" target="_blank">Share Link</a>`;
+      };
+      reader.readAsBinaryString(file);
+    }
+  </script>
+</body>
+</html>
